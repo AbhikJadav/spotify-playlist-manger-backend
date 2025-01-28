@@ -1,6 +1,25 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import SpotifyWebApi from 'spotify-web-api-node';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    spotifyAccessToken: string;
+  };
+}
+
+interface Song {
+  spotifyId: string;
+  name: string;
+  artists: { id: string; name: string }[];
+  artist: string;
+  album: string;
+  albumId: string;
+  duration: number;
+  albumArt: string | undefined;
+  uri: string;
+  previewUrl: string | null;
+}
 
 const router = express.Router();
 
@@ -12,7 +31,7 @@ const spotifyApi = new SpotifyWebApi({
 });
 
 // Search tracks
-router.get('/search', authenticateToken, async (req, res) => {
+router.get('/search', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { q: query } = req.query;
     if (!query) {
@@ -20,13 +39,21 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
 
     // Set access token from user's session or refresh if needed
-    const accessToken = req.user.spotifyAccessToken;
+    const accessToken = req.user?.spotifyAccessToken;
+    if (!accessToken) {
+      return res.status(401).json({ message: 'No access token found' });
+    }
+    
     spotifyApi.setAccessToken(accessToken);
 
     const response = await spotifyApi.searchTracks(query as string, { limit: 20 });
     
+    if (!response.body.tracks) {
+      return res.status(404).json({ message: 'No tracks found' });
+    }
+
     // Transform the response to match our Song interface
-    const tracks = response.body.tracks.items.map(track => ({
+    const tracks: Song[] = response.body.tracks.items.map(track => ({
       spotifyId: track.id,
       name: track.name,
       artists: track.artists.map(artist => ({
@@ -42,15 +69,15 @@ router.get('/search', authenticateToken, async (req, res) => {
       previewUrl: track.preview_url
     }));
 
-    res.json({ tracks });
-  } catch (error: any) {
+    return res.json({ tracks });
+  } catch (error) {
     console.error('Error searching tracks:', error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Error searching tracks' });
   }
 });
 
 // Add track to playlist
-router.post('/playlists/:playlistId/tracks', authenticateToken, async (req, res) => {
+router.post('/playlists/:playlistId/tracks', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { playlistId } = req.params;
     const { uri } = req.body;
@@ -60,19 +87,23 @@ router.post('/playlists/:playlistId/tracks', authenticateToken, async (req, res)
     }
 
     // Set access token from user's session
-    const accessToken = req.user.spotifyAccessToken;
+    const accessToken = req.user?.spotifyAccessToken;
+    if (!accessToken) {
+      return res.status(401).json({ message: 'No access token found' });
+    }
+    
     spotifyApi.setAccessToken(accessToken);
 
     await spotifyApi.addTracksToPlaylist(playlistId, [uri]);
-    res.json({ message: 'Track added successfully' });
-  } catch (error: any) {
+    return res.json({ message: 'Track added successfully' });
+  } catch (error) {
     console.error('Error adding track to playlist:', error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Error adding track to playlist' });
   }
 });
 
 // Get track recommendations
-router.get('/recommendations', authenticateToken, async (req, res) => {
+router.get('/recommendations', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { seed_tracks } = req.query;
     if (!seed_tracks) {
@@ -80,7 +111,11 @@ router.get('/recommendations', authenticateToken, async (req, res) => {
     }
 
     // Set access token from user's session
-    const accessToken = req.user.spotifyAccessToken;
+    const accessToken = req.user?.spotifyAccessToken;
+    if (!accessToken) {
+      return res.status(401).json({ message: 'No access token found' });
+    }
+    
     spotifyApi.setAccessToken(accessToken);
 
     const response = await spotifyApi.getRecommendations({
@@ -88,8 +123,12 @@ router.get('/recommendations', authenticateToken, async (req, res) => {
       limit: 20
     });
 
+    if (!response.body.tracks) {
+      return res.status(404).json({ message: 'No tracks found' });
+    }
+
     // Transform the response to match our Song interface
-    const tracks = response.body.tracks.map(track => ({
+    const tracks: Song[] = response.body.tracks.map(track => ({
       spotifyId: track.id,
       name: track.name,
       artists: track.artists.map(artist => ({
@@ -105,17 +144,21 @@ router.get('/recommendations', authenticateToken, async (req, res) => {
       previewUrl: track.preview_url
     }));
 
-    res.json({ tracks });
-  } catch (error: any) {
+    return res.json({ tracks });
+  } catch (error) {
     console.error('Error getting recommendations:', error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Error getting recommendations' });
   }
 });
 
 // Get user's Spotify playlists
-router.get('/playlists', authenticateToken, async (req, res) => {
+router.get('/playlists', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const accessToken = req.user.spotifyAccessToken;
+    const accessToken = req.user?.spotifyAccessToken;
+    if (!accessToken) {
+      return res.status(401).json({ message: 'No access token found' });
+    }
+    
     spotifyApi.setAccessToken(accessToken);
 
     const response = await spotifyApi.getUserPlaylists();
@@ -128,10 +171,10 @@ router.get('/playlists', authenticateToken, async (req, res) => {
       owner: playlist.owner
     }));
 
-    res.json({ playlists });
-  } catch (error: any) {
+    return res.json({ playlists });
+  } catch (error) {
     console.error('Error getting user playlists:', error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: 'Error getting user playlists' });
   }
 });
 
