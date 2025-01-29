@@ -1,21 +1,10 @@
-import express, { Request, Response, NextFunction } from 'express';
-import { registerUser, loginUser, getAllUsers } from '../controllers/authController';
-import { authMiddleware } from '../middleware/authMiddleware';
+import express from 'express';
+import { login, register, refreshToken } from '../controllers/authController';
 
 const router = express.Router();
 
-// Public routes
-router.post('/register', async (req: Request, res: Response) => {
-    return await registerUser(req, res);
-});
-
-router.post('/login', async (req: Request, res: Response) => {
-    return await loginUser(req, res);
-});
-
-// Protected route to get all users
-router.get('/users', authMiddleware, async (req: Request, res: Response) => {
-    return await getAllUsers(req, res);
-});
+router.post('/login', login);
+router.post('/register', register);
+router.post('/refresh-token', refreshToken);
 
 export default router;

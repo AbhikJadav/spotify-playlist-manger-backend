@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "build": "tsc",
+    "clean": "rimraf dist",
+    "build": "npm run clean && tsc --project tsconfig.json",
+    "postbuild": "copyfiles -u 1 src/**/*.json dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -36,6 +38,8 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^5.0.5",
     "ts-node-dev": "^2.0.0"
   }
 }
