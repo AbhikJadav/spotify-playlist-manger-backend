@@ -8,7 +8,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc --project tsconfig.json",
-    "postbuild": "copyfiles -u 1 src/**/*.json dist/",
+    "postbuild": "copyfiles -u 1 src/**/*.json dist/ && copyfiles -u 1 public/** dist/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

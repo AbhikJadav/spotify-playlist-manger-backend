@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
 import authRoutes from './routes/authRoutes';
 import playlistRoutes from './routes/playlistRoutes';
 import spotifyRoutes from './routes/spotify.routes';
@@ -15,6 +16,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok' });
@@ -24,6 +28,11 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/spotify', spotifyRoutes);
+
+// Serve index.html for all other routes (for client-side routing)
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // Error handling middleware
 app.use(errorHandler);
