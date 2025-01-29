@@ -12,8 +12,22 @@ dotenv.config();
 
 const app = express();
 
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',  // Vite's default development port
+    'http://localhost:3000',  // Alternative development port
+    'https://spotify-playlist-manager-frontend.vercel.app', // Production frontend URL
+    /\.vercel\.app$/, // Allow all Vercel preview deployments
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve static files from the public directory
