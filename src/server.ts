@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
@@ -7,28 +6,18 @@ import authRoutes from './routes/authRoutes';
 import playlistRoutes from './routes/playlistRoutes';
 import spotifyRoutes from './routes/spotify.routes';
 import { errorHandler } from './middleware/errorHandler';
+import { corsMiddleware } from './middleware/corsMiddleware';
 
 dotenv.config();
 
 const app = express();
 
-// CORS configuration
-const corsOptions = {
-  origin: [
-    'http://localhost:5173',  // Vite's default development port
-    'http://localhost:3000',  // Alternative development port
-    'https://spotify-playlist-manager-frontend.vercel.app', // Production frontend URL
-    /\.vercel\.app$/, // Allow all Vercel preview deployments
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  maxAge: 86400 // 24 hours
-};
+// Apply CORS middleware before any routes
+app.use(corsMiddleware);
 
-// Middleware
-app.use(cors(corsOptions));
+// Body parser middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, '../public')));
