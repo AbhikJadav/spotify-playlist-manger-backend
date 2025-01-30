@@ -14,8 +14,7 @@ dotenv.config();
 const app = express();
 
 // Apply CORS middleware before any routes
-// app.use(corsMiddleware);
-app.use(cors());
+app.use(corsMiddleware);
 
 // Body parser middleware
 app.use(express.json());
