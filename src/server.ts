@@ -13,8 +13,18 @@ dotenv.config();
 
 const app = express();
 
-// Apply CORS middleware before any routes
-app.use(corsMiddleware);
+// Enable CORS for all routes
+app.use(cors());
+app.options('*', cors()); // enable pre-flight for all routes
+
+// Add headers before the routes are defined
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type,Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    next();
+});
 
 // Body parser middleware
 app.use(express.json());
