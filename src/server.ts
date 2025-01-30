@@ -6,25 +6,28 @@ import authRoutes from './routes/authRoutes';
 import playlistRoutes from './routes/playlistRoutes';
 import spotifyRoutes from './routes/spotify.routes';
 import { errorHandler } from './middleware/errorHandler';
-import { corsMiddleware } from './middleware/corsMiddleware';
 import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 
-// Enable CORS for all routes
-app.use(cors());
-app.options('*', cors()); // enable pre-flight for all routes
+// Enable CORS with specific options
+const corsOptions = {
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://spotify-playlist-manager.vercel.app',
+        'https://spotify-playlist-manager-git-main.vercel.app',
+        'https://spotify-playlist-manager-frontend-umber.vercel.app'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true
+};
 
-// Add headers before the routes are defined
-app.use(function (req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type,Authorization');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    next();
-});
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Body parser middleware
 app.use(express.json());
@@ -51,26 +54,24 @@ app.get('*', (_req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spotify_playlist_db';
+// MongoDB connection
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/spotify-playlist-manager')
+    .then(() => console.log('MongoDB Connected'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
+const PORT = process.env.PORT || 3001;
+
+mongoose.connection.on('connected', () => {
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+        console.log(`Server is running on port ${PORT}`);
     });
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  });
+});
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err: any) => {
-  console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  process.exit(1);
+    console.error('Unhandled Promise Rejection:', err);
+    // Close server & exit process
+    process.exit(1);
 });
 
 export default app;
