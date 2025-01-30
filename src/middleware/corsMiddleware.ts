@@ -1,8 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const corsMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    // Allow requests from any origin
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'https://spotify-playlist-manager.vercel.app',
+        'https://spotify-playlist-manager-git-main.vercel.app',
+        'https://spotify-playlist-manager-frontend-umber.vercel.app'
+    ];
+
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     
     // Allow specific methods
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -15,7 +25,8 @@ export const corsMiddleware = (req: Request, res: Response, next: NextFunction) 
     
     // Handle preflight requests
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        res.status(204).end();
+        return;
     }
     
     next();
