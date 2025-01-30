@@ -7,13 +7,15 @@ import playlistRoutes from './routes/playlistRoutes';
 import spotifyRoutes from './routes/spotify.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { corsMiddleware } from './middleware/corsMiddleware';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 
 // Apply CORS middleware before any routes
-app.use(corsMiddleware);
+// app.use(corsMiddleware);
+app.use(cors());
 
 // Body parser middleware
 app.use(express.json());
