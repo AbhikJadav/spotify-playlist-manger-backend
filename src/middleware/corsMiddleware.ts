@@ -10,9 +10,12 @@ const allowedOrigins = [
 
 export const corsMiddleware = cors({
     origin: (origin, callback) => {
+        console.log('Incoming request from origin:', origin);  // Log the origin
+
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.error(`Blocked by CORS: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
     },
